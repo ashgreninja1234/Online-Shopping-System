@@ -1,0 +1,165 @@
+# Product class classifies products with attributes
+class Product:
+    def __init__(self, name, price, category):
+        # Initialize product attributes
+        self._name = name
+        self._price = price
+        self._category = category
+
+    # Define how products are classified
+    def __eq__(self, other):
+         if isinstance(other, Product):
+             if  (self._name == other._name and self._price == other._price and self._category == other._category):
+                  return True
+             else:
+                  return False
+         else:
+                  return False
+
+    def get_name(self):
+        return self._name
+
+    def get_price(self):
+        return self._price
+
+    def get_category(self):
+        return self._category
+
+    # Implement string representation
+    def __repr__(self):
+        rep = 'Product(' + self._name + ',' + str(self._price) + ',' + self._category + ')'
+        return rep
+
+
+# Inventory class contains functions to add, remove product from inventory
+# Contains functions to get price and quantity
+class Inventory:
+    def __init__(self):
+        # Dictionary storing price and quantity for product
+        self.inventoryDictionary = {}
+    def add_to_productInventory(self, productName, productPrice, productQuantity):
+        self.inventoryDictionary[productName] = {"product price": productPrice, "product quantity": productQuantity}
+
+    def add_productQuantity(self, nameProduct, addQuantity):
+        self.inventoryDictionary[nameProduct]["product quantity"] += addQuantity
+
+    def remove_productQuantity(self, nameProduct, removeQuantity):
+        self.inventoryDictionary[nameProduct]["product quantity"] -= removeQuantity
+
+    def get_productPrice(self, nameProduct):
+        return self.inventoryDictionary[nameProduct]["product price"]
+
+    def get_productQuantity(self, nameProduct):
+        return self.inventoryDictionary[nameProduct]["product quantity"]
+
+    # Function displays inventory
+    def display_Inventory(self):
+        for i in self.inventoryDictionary:
+            print(i + ", " + str(self.get_productPrice(i)) + ", " + str(self.get_productQuantity(i)))
+
+# ShoppingCart class contains functions to add, remove, and view cart
+class ShoppingCart:
+    def __init__(self, buyerName, inventory):
+        #Dictionary containing products, total price, and buyer name
+        self.cart = {"product": {}, "total": 0, "buyer": buyerName}
+        self.inventory = inventory
+        self.buyerName = buyerName
+
+    # Adds product to cart, if requested amount in inventory
+    # Removes requested amount of product from inventory
+    def add_to_cart(self, nameProduct, requestedQuantity):
+        if self.inventory.get_productQuantity(nameProduct) <= requestedQuantity:
+            return("Can not fill the order")
+        else:
+            self.inventory.remove_productQuantity(nameProduct,requestedQuantity)
+            if nameProduct in self.cart["product"]:
+                self.cart["product"][nameProduct][1] += requestedQuantity
+            else:
+                self.cart["product"][nameProduct] = [self.inventory.get_productPrice(nameProduct), requestedQuantity]
+            return("Filled the order")
+
+    # Removes requested amount of product from cart and adds back to inventory
+    def remove_from_cart(self, nameProduct, requestedQuantity):
+        if nameProduct not in self.cart["product"]:
+            return("Product not in the cart")
+        elif requestedQuantity > self.cart["product"][nameProduct][1]:
+            return("The requested quantity to be removed from cart exceeds what is in the cart")
+        else:
+            self.inventory.add_productQuantity(nameProduct, requestedQuantity)
+            self.cart["product"][nameProduct][1] -= requestedQuantity
+            return("Successful")
+
+    # Displays cart contents with total price and buyer name
+    def view_cart(self):
+        total = 0
+        for i in self.cart["product"]:
+            quantity = self.cart["product"][i][1]
+            price = self.cart["product"][i][0]
+            print(i + str(quantity))
+            total += quantity*price
+        print("Total: " + str(total))
+        print("Buyer Name: " + self.buyerName)
+
+
+# ProductCatalog class contains product information
+class ProductCatalog:
+    def __init__(self):
+        self.catalog = []
+        self.price_catagory_dict = {"low": 0, "medium": 0, "high": 0}
+    def add_Product(self, product):
+        self.catalog.append(product)
+
+    # adds to count of product price range
+    def price_category(self):
+        for i in self.catalog:
+            if 0 <= i.get_price() <= 99:
+                self.price_catagory_dict["low"] += 1
+            elif 100 <= i.get_price() <= 499:
+                self.price_catagory_dict["medium"] += 1
+            elif i.get_price() > 500:
+                self.price_catagory_dict["high"] += 1
+
+        print("Number of low price items: " + str(self.price_catagory_dict["low"]))
+        print("Number of medium price items: " + str(self.price_catagory_dict["medium"]))
+        print("Number of high price items: " + str(self.price_catagory_dict["high"]))
+
+    # Catalog displayed
+    def display_catalog(self):
+        for i in self.catalog:
+            print("Product: " + i.get_name() + " Price: " + str(i.get_price()) + " Category: " + i.get_category())
+
+
+# Function opens, reads, and cleans file
+# Calls Inventory class for each product in file
+def populate_inventory(filename):
+    item = Inventory()
+
+    file = open(filename, 'r')
+    for text in file:
+        part = text.strip().split(',')
+
+        name = str(part[0])
+        price = int(part[1])
+        quantity = int(part[2])
+
+        item.add_to_productInventory(name,price,quantity)
+
+    return item
+
+# Function opens, reads, and cleans file
+# Calls ProductCatalog class for each product in file
+def populate_catalog(fileName):
+    catalog = ProductCatalog()
+
+    file = open(fileName, 'r')
+    for text in file:
+        part = text.strip().split(',')
+
+        name = str(part[0])
+        price = int(part[1])
+        category = str(part[3])
+
+        item = Product(name,price,category)
+        catalog.add_Product(item)
+
+    return catalog
